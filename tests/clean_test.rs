@@ -100,6 +100,58 @@ mod unit_tests {
         assert_eq!(result.unwrap(), false);
     }
 
+    // 🔴 RED: 古いworktreeを判定するテスト
+    #[test]
+    fn test_is_worktree_stale_based_on_last_commit() {
+        // 一時的なgitリポジトリを作成
+        let temp_dir = TempDir::new().unwrap();
+        let repo_path = temp_dir.path();
+        
+        // gitリポジトリを初期化
+        let repo = Repository::init(repo_path).unwrap();
+        
+        // 設定を追加（commitに必要）
+        let mut config = repo.config().unwrap();
+        config.set_str("user.name", "Test User").unwrap();
+        config.set_str("user.email", "test@example.com").unwrap();
+        
+        // 初期コミットを作成
+        create_initial_commit(&repo, repo_path);
+        
+        // GitWorktreeインスタンスを作成
+        let git_worktree = GitWorktree::from_path(repo_path).unwrap();
+        
+        // 30日より古いworktreeかどうかを判定（現在は新しいので、falseが返るはず）
+        let result = git_worktree.is_worktree_stale("main", 30);
+        assert_eq!(result.unwrap(), false);
+    }
+
+    // 🔴 RED: 三角測量 - 実際に古いコミットのテスト
+    #[test]
+    fn test_is_worktree_stale_returns_true_for_old_branch() {
+        // 一時的なgitリポジトリを作成
+        let temp_dir = TempDir::new().unwrap();
+        let repo_path = temp_dir.path();
+        
+        // gitリポジトリを初期化
+        let repo = Repository::init(repo_path).unwrap();
+        
+        // 設定を追加（commitに必要）
+        let mut config = repo.config().unwrap();
+        config.set_str("user.name", "Test User").unwrap();
+        config.set_str("user.email", "test@example.com").unwrap();
+        
+        // 古い日時でコミットを作成（40日前）
+        create_initial_commit_with_date(&repo, repo_path, 40);
+        
+        // GitWorktreeインスタンスを作成
+        let git_worktree = GitWorktree::from_path(repo_path).unwrap();
+        
+        // 30日より古いworktreeかどうかを判定（40日前なので、trueが返るはず）
+        let result = git_worktree.is_worktree_stale("main", 30);
+        assert_eq!(result.unwrap(), true);
+    }
+
     // 🔴 RED: 三角測量のための2つ目のテスト（マージ済みブランチ）
     #[test]
     fn test_is_branch_merged_returns_true_for_merged_branch() {
@@ -195,6 +247,45 @@ mod unit_tests {
         let tree_id = index.write_tree().unwrap();
         let tree = repo.find_tree(tree_id).unwrap();
         let signature = repo.signature().unwrap();
+        
+        repo.commit(
+            Some("HEAD"),
+            &signature,
+            &signature,
+            "Initial commit",
+            &tree,
+            &[],
+        ).unwrap();
+    }
+
+    // 指定した日数前の日時でコミットを作成する関数
+    fn create_initial_commit_with_date(repo: &Repository, repo_path: &Path, days_ago: i64) {
+        // README.mdファイルを作成
+        let readme_path = repo_path.join("README.md");
+        std::fs::write(&readme_path, "# Test Repository").unwrap();
+        
+        // ファイルをステージング
+        let mut index = repo.index().unwrap();
+        index.add_path(Path::new("README.md")).unwrap();
+        index.write().unwrap();
+        
+        // 過去の日時を計算（UNIX時間）
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        let days_ago_timestamp = now - (days_ago * 24 * 60 * 60);
+        
+        // 過去の日時でシグネチャを作成
+        let signature = git2::Signature::new(
+            "Test User",
+            "test@example.com",
+            &git2::Time::new(days_ago_timestamp, 0)
+        ).unwrap();
+        
+        // コミットを作成
+        let tree_id = index.write_tree().unwrap();
+        let tree = repo.find_tree(tree_id).unwrap();
         
         repo.commit(
             Some("HEAD"),

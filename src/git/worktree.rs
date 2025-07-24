@@ -189,6 +189,38 @@ impl GitWorktree {
         Ok(is_ancestor)
     }
     
+    // 🟢 GREEN: 古いworktreeかどうかの判定（実装）
+    pub fn is_worktree_stale(&self, branch_name: &str, days: u32) -> Result<bool> {
+        // ブランチの参照を取得
+        let branch_ref = format!("refs/heads/{}", branch_name);
+        
+        let branch_commit = match self.repo.find_reference(&branch_ref) {
+            Ok(reference) => {
+                let oid = reference.target().ok_or_else(|| {
+                    GitGardenerError::Custom(format!("Branch {} has no target", branch_name))
+                })?;
+                self.repo.find_commit(oid)?
+            }
+            Err(_) => {
+                // ブランチが存在しない場合はfalse（削除できない）
+                return Ok(false);
+            }
+        };
+        
+        // 最後のコミット日時を取得
+        let commit_time = branch_commit.time().seconds();
+        
+        // 現在時刻から指定日数前の時刻を計算
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64;
+        let threshold_time = now - (days as i64 * 24 * 60 * 60);
+        
+        // コミット時刻が閾値より古いかどうかを判定
+        Ok(commit_time < threshold_time)
+    }
+    
     // 🔴 RED: ステータス情報付きワーキングツリー一覧取得（まだ基本実装のみ）
     pub fn list_worktrees_with_status(&self) -> Result<Vec<WorktreeInfoWithStatus>> {
         let worktrees = self.list_worktrees()?;

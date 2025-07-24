@@ -49,11 +49,11 @@ impl CleanCommand {
                 // --forceですべてのworktreeを削除
                 true
             } else if self.merged {
-                // TODO: マージ済みかどうかの判定（後で実装）
-                true
-            } else if let Some(_days) = self.stale {
-                // TODO: 古いworktreeかどうかの判定（後で実装）
-                true
+                // マージ済みブランチの判定
+                git_worktree.is_branch_merged(&worktree.branch, "main").unwrap_or(false)
+            } else if let Some(days) = self.stale {
+                // 古いworktreeかどうかの判定
+                git_worktree.is_worktree_stale(&worktree.branch, days).unwrap_or(false)
             } else {
                 false
             };
