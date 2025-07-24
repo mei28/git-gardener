@@ -84,7 +84,10 @@ mod tests {
                 assert!(msg.contains("Created worktree"));
                 
                 // 実際にディレクトリが存在することを確認
-                let expected_path = temp_dir.path().join(".gardener").join(unique_branch.replace('/', "-"));
+                // 新しいパスロジックに対応：repo_root.parent().unwrap_or(&repo_root).join(&config.defaults.root_dir)
+                let repo_root = temp_dir.path();
+                let gardener_parent = repo_root.parent().unwrap_or(repo_root);
+                let expected_path = gardener_parent.join(".gardener").join(unique_branch.replace('/', "-"));
                 assert!(expected_path.exists());
             },
             Err(_) => {

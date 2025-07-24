@@ -7,7 +7,7 @@ mod hooks;
 
 use clap::Parser;
 use cli::{Cli, Commands, ConfigSubcommands};
-use commands::{add::AddCommand, clean::CleanCommand, config::{ConfigCommand, ConfigSubcommand}, init::InitCommand, list::ListCommand, pull_all::PullAllCommand, tui::TuiCommand};
+use commands::{add::AddCommand, cd::CdCommand, clean::CleanCommand, config::{ConfigCommand, ConfigSubcommand}, init::InitCommand, list::ListCommand, pull_all::PullAllCommand, tui::TuiCommand};
 use error::Result;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
@@ -53,9 +53,9 @@ fn run() -> Result<()> {
             let cmd = AddCommand::new(branch, path, upstream, create_branch);
             cmd.execute()
         }
-        Commands::List { all } => {
+        Commands::List { all, names_only } => {
             info!("Running list command");
-            let cmd = ListCommand::new(all);
+            let cmd = ListCommand::new(all, names_only);
             cmd.execute()
         }
         Commands::Config { subcommand } => {
@@ -81,6 +81,13 @@ fn run() -> Result<()> {
             info!("Running TUI command");
             let cmd = TuiCommand::new(fullscreen, no_mouse);
             cmd.execute()
+        }
+        Commands::Cd { worktree_name } => {
+            info!("Running cd command for worktree: {}", worktree_name);
+            let cmd = CdCommand::new(worktree_name);
+            let path = cmd.execute()?;
+            println!("{}", path);
+            Ok(())
         }
     }
 }

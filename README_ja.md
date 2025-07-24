@@ -55,6 +55,30 @@ cargo build --release
 cp target/release/git-gardener /usr/local/bin/
 ```
 
+### シェル補完
+コマンドとworktree名のタブ補完を有効にします：
+
+```bash
+# シェル用の補完をインストール
+./scripts/install-completions.sh
+
+# または特定のシェル用にインストール
+./scripts/install-completions.sh --bash   # Bash用
+./scripts/install-completions.sh --zsh    # Zsh用
+./scripts/install-completions.sh --fish   # Fish用
+./scripts/install-completions.sh --all    # 全シェル用
+```
+
+**手動インストール:**
+- **Bash**: `completions/git-gardener.bash`を`.bashrc`でsource
+- **Zsh**: `completions/git-gardener.zsh`を`_git-gardener`として`fpath`にコピー
+- **Fish**: `completions/git-gardener.fish`を`~/.config/fish/completions/`にコピー
+
+**機能:**
+- 全コマンドとオプションのタブ補完
+- `git-gardener cd <TAB>`でworktree名の自動補完
+- コマンドごとのスマートなコンテキスト補完
+
 ### 必要な環境
 
 - Nix（推奨、フレーク機能有効）、または
@@ -115,7 +139,32 @@ git-gardener add -b hotfix/urgent --path ../hotfix-urgent
 
 ```bash
 git-gardener list
-git-gardener list --all  # プルーンされたworktreeも含む
+git-gardener list --all         # プルーンされたworktreeも含む
+git-gardener list --names-only  # worktree名のみを出力（シェル補完用）
+```
+
+**オプション:**
+- `-a, --all`: プルーン可能なworktreeも含めてすべて表示
+- `--names-only`: worktree名のみを出力（シェル補完に便利）
+
+### `git-gardener cd`
+特定のworktreeのパスを出力します（シェルナビゲーションに便利）。
+
+```bash
+# worktreeのパスを取得
+git-gardener cd feature-auth
+
+# シェルと組み合わせて移動
+cd $(git-gardener cd feature-auth)
+```
+
+**シェルエイリアスでの使用例:**
+```bash
+# .bashrcや.zshrcに追加
+alias gcd='cd $(git-gardener cd "$1")'
+
+# その後、以下のように使用
+gcd feature-auth
 ```
 
 ### `git-gardener clean`
@@ -174,6 +223,7 @@ git-gardener tui
   - `d` - 選択されたworktreeを削除（確認あり）
   - `p` - 選択されたworktreeで最新変更をpull
   - `c` - worktreeをクリーンアップ（merged/staleオプション選択）
+  - `n` - 選択されたworktreeに移動（cdパスを表示）
   - `Enter` - 設定されたエディタでworktreeを開く
 - **リアルタイムステータス**: worktreeの状態を表示（Clean、Dirty、Ahead、Behind、Diverged）
 - **スマートクリーンアップ**: クリーンアップ条件の対話的選択

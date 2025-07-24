@@ -50,6 +50,10 @@ pub enum Commands {
         /// Show all worktrees including prunable ones
         #[arg(short = 'a', long = "all")]
         all: bool,
+        
+        /// Output only worktree names (for shell completion)
+        #[arg(long = "names-only")]
+        names_only: bool,
     },
     
     /// View or edit configuration
@@ -91,8 +95,11 @@ pub enum Commands {
         no_mouse: bool,
     },
     
-    // TODO: 以下のコマンドは後のフェーズで実装
-    // Go { ... },
+    /// Change to worktree directory
+    Cd {
+        /// Worktree name to change to
+        worktree_name: String,
+    },
 }
 
 #[derive(Subcommand, Debug)]

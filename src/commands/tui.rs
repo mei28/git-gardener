@@ -25,6 +25,7 @@ pub enum TuiAction {
     Pull,
     Clean,
     Open,
+    Navigate,
 }
 
 // 🟢 GREEN: ダイアログモードの定義
@@ -115,6 +116,10 @@ impl TuiState {
                         // openアクションの実装
                         self.execute_open_action()
                     },
+                    TuiAction::Navigate => {
+                        // navigateアクションの実装
+                        self.execute_navigate_action()
+                    },
                 }
             },
             None => Err(GitGardenerError::Custom("No action set".to_string())),
@@ -130,15 +135,30 @@ impl TuiState {
         
         // 実際のワーキングツリー作成（最小実装）
         let git_worktree = GitWorktree::new()?;
+        let repo_root = git_worktree.get_repository_root()?;
+        
+        // 設定ファイルを読み込む（存在しない場合はデフォルト設定を使用）
+        let config_path = Config::get_config_path(&repo_root);
+        let config = if config_path.exists() {
+            Config::load_from_file(&config_path)?
+        } else {
+            Config::default()
+        };
+        
         let worktree_name = branch_name.replace('/', "-");
-        let gardener_dir = std::env::current_dir()?.join(".gardener");
         
-        // .gardenerディレクトリを作成（存在しない場合）
-        std::fs::create_dir_all(&gardener_dir).map_err(|e| 
-            GitGardenerError::Custom(format!("Failed to create .gardener directory: {}", e))
-        )?;
+        // worktreeのパスを決定（addコマンドと同じロジック）
+        let worktree_path = repo_root.parent()
+            .unwrap_or(&repo_root)
+            .join(&config.defaults.root_dir)
+            .join(&worktree_name);
         
-        let worktree_path = gardener_dir.join(&worktree_name);
+        // 親ディレクトリを作成
+        if let Some(parent) = worktree_path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| 
+                GitGardenerError::Custom(format!("Failed to create worktree directory: {}", e))
+            )?;
+        }
         
         git_worktree.create_worktree(&worktree_name, &worktree_path, branch_name, true)?;
         
@@ -298,6 +318,21 @@ impl TuiState {
         Ok(result)
     }
     
+    // 🟢 GREEN: navigateアクションの実装
+    fn execute_navigate_action(&self) -> Result<String> {
+        // 選択されたworktreeを取得
+        let selected_worktree = match self.get_selected() {
+            Some(worktree) => worktree,
+            None => return Err(GitGardenerError::Custom("No worktree selected".to_string())),
+        };
+        
+        // worktreeのパスを返す（cdコマンドと同じ動作）
+        let worktree_path = selected_worktree.path.to_string_lossy().to_string();
+        
+        // TUIを終了してパスを出力するためのメッセージ
+        Ok(format!("Navigate to: {}", worktree_path))
+    }
+    
     pub fn set_action(&mut self, action: Option<TuiAction>) {
         self.current_action = action;
     }
@@ -415,9 +450,10 @@ impl TuiState {
                     TuiAction::Pull => "[Enter] confirm pull  [Esc] cancel".to_string(),
                     TuiAction::Clean => "[Enter] confirm clean  [Esc] cancel".to_string(),
                     TuiAction::Open => "[Enter] confirm open  [Esc] cancel".to_string(),
+                    TuiAction::Navigate => "[Enter] confirm navigate  [Esc] cancel".to_string(),
                 }
             }
-            None => "[j/k,↓/↑] navigate  [g/G] first/last  [a] add  [d] delete  [p] pull  [c] clean  [Enter] open  [q] quit".to_string(),
+            None => "[j/k,↓/↑] navigate  [g/G] first/last  [a] add  [d] delete  [p] pull  [c] clean  [n] navigate  [Enter] open  [q] quit".to_string(),
         }
     }
 }
@@ -508,6 +544,9 @@ impl TuiCommand {
                     KeyCode::Char('c') if state.current_action.is_none() && !state.is_in_dialog() => {
                         state.set_action(Some(TuiAction::Clean));
                         state.enter_dialog_mode(DialogMode::CleanOptions);
+                    },
+                    KeyCode::Char('n') if state.current_action.is_none() => {
+                        state.set_action(Some(TuiAction::Navigate));
                     },
                     KeyCode::Enter => {
                         if state.is_in_dialog() {

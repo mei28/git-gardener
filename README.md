@@ -55,6 +55,30 @@ cargo build --release
 cp target/release/git-gardener /usr/local/bin/
 ```
 
+### Shell Completion
+Enable tab completion for commands and worktree names:
+
+```bash
+# Install completion for your shell
+./scripts/install-completions.sh
+
+# Or install for specific shell
+./scripts/install-completions.sh --bash   # For Bash
+./scripts/install-completions.sh --zsh    # For Zsh  
+./scripts/install-completions.sh --fish   # For Fish
+./scripts/install-completions.sh --all    # For all shells
+```
+
+**Manual installation:**
+- **Bash**: Source `completions/git-gardener.bash` in your `.bashrc`
+- **Zsh**: Copy `completions/git-gardener.zsh` to `_git-gardener` in your `fpath`
+- **Fish**: Copy `completions/git-gardener.fish` to `~/.config/fish/completions/`
+
+**Features:**
+- Tab completion for all commands and options
+- Auto-complete worktree names for `git-gardener cd <TAB>`
+- Smart context-aware completion for different commands
+
 ### Prerequisites
 
 - Nix (recommended) with flakes enabled, or
@@ -115,7 +139,32 @@ Display all worktrees with their status information.
 
 ```bash
 git-gardener list
-git-gardener list --all  # Include pruned worktrees
+git-gardener list --all         # Include pruned worktrees
+git-gardener list --names-only  # Output only worktree names (for shell completion)
+```
+
+**Options:**
+- `-a, --all`: Show all worktrees including prunable ones
+- `--names-only`: Output only worktree names (useful for shell completion)
+
+### `git-gardener cd`
+Output the path to a specific worktree (useful for shell navigation).
+
+```bash
+# Get path to worktree
+git-gardener cd feature-auth
+
+# Use with shell to navigate
+cd $(git-gardener cd feature-auth)
+```
+
+**Usage with shell aliases:**
+```bash
+# Add to your .bashrc or .zshrc
+alias gcd='cd $(git-gardener cd "$1")'
+
+# Then use:
+gcd feature-auth
 ```
 
 ### `git-gardener clean`
@@ -174,6 +223,7 @@ git-gardener tui
   - `d` - Delete selected worktree (with confirmation)
   - `p` - Pull latest changes for selected worktree
   - `c` - Clean worktrees (choose merged/stale options)
+  - `n` - Navigate to selected worktree (shows path for cd)
   - `Enter` - Open worktree in configured editor
 - **Real-time Status**: See worktree status (Clean, Dirty, Ahead, Behind, Diverged)
 - **Smart Cleanup**: Interactive selection of cleanup criteria
