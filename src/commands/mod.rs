@@ -9,6 +9,7 @@ pub mod cd;
 pub mod remove;
 pub mod prune;
 pub mod r#move;
+pub mod completion;
 
 use crate::error::Result;
 

@@ -10,12 +10,13 @@ A powerful Git worktree management tool that simplifies parallel development wor
 
 ## Features
 
-- **Easy Worktree Creation**: Create worktrees with minimal commands
+- **Easy Worktree Creation**: Create worktrees with minimal commands and automatic .gardener folder setup
 - **Intelligent Cleanup**: Automatically detect and remove merged or stale worktrees
+- **Complete Worktree Management**: Remove, prune, and move worktrees with dedicated commands
+- **Smart Tab Completion**: Branch name completion when using `-b` flag and context-aware command completion
 - **Parallel Operations**: Pull all worktrees simultaneously with parallel processing
-- **Interactive TUI**: Full-featured terminal interface with visual worktree management
-- **Editor Integration**: Open worktrees in your preferred editor with one keystroke
-- **Flexible Configuration**: Per-repository customization via TOML config files
+- **Interactive TUI**: Full-featured terminal interface with directory navigation (cd to worktrees)
+- **Flexible Configuration**: Per-repository customization via TOML config files with automatic .gitignore management
 - **Smart Detection**: Automatically identify merged branches and old commits
 
 ## Installation
@@ -58,6 +59,31 @@ cp target/release/git-gardener /usr/local/bin/
 ### Shell Completion
 Enable tab completion for commands and worktree names:
 
+#### Option 1: Using the built-in completion command (Recommended for Nix users)
+
+```bash
+# Generate and install completion for your shell
+git-gardener completion bash > ~/.local/share/bash-completion/completions/git-gardener
+git-gardener completion zsh > ~/.local/share/zsh/site-functions/_git-gardener
+git-gardener completion fish > ~/.config/fish/completions/git-gardener.fish
+
+# Or pipe directly to install
+# For Bash:
+git-gardener completion bash | sudo tee /etc/bash_completion.d/git-gardener
+
+# For Zsh (add to your .zshrc):
+mkdir -p ~/.local/share/zsh/site-functions
+git-gardener completion zsh > ~/.local/share/zsh/site-functions/_git-gardener
+echo "fpath=(~/.local/share/zsh/site-functions \$fpath)" >> ~/.zshrc
+echo "autoload -U compinit && compinit" >> ~/.zshrc
+
+# For Fish:
+mkdir -p ~/.config/fish/completions
+git-gardener completion fish > ~/.config/fish/completions/git-gardener.fish
+```
+
+#### Option 2: Using the install script (For development/source builds)
+
 ```bash
 # Install completion for your shell
 ./scripts/install-completions.sh
@@ -76,6 +102,7 @@ Enable tab completion for commands and worktree names:
 
 **Features:**
 - Tab completion for all commands and options
+- Auto-complete branch names when using `-b <TAB>` flag
 - Auto-complete worktree names for `git-gardener cd <TAB>`
 - Smart context-aware completion for different commands
 
@@ -224,17 +251,66 @@ git-gardener tui
   - `p` - Pull latest changes for selected worktree
   - `c` - Clean worktrees (choose merged/stale options)
   - `n` - Navigate to selected worktree (shows path for cd)
-  - `Enter` - Open worktree in configured editor
+  - `Enter` - Navigate to selected worktree directory (prints path for cd)
 - **Real-time Status**: See worktree status (Clean, Dirty, Ahead, Behind, Diverged)
 - **Smart Cleanup**: Interactive selection of cleanup criteria
 
+### `git-gardener remove`
+Remove a specific worktree.
+
+```bash
+# Remove worktree safely
+git-gardener remove feature-auth
+
+# Force remove even with uncommitted changes
+git-gardener remove feature-auth --force
+```
+
+**Options:**
+- `-f, --force`: Force removal even if worktree has uncommitted changes
+
+### `git-gardener prune`
+Remove worktree records for deleted directories.
+
+```bash
+git-gardener prune
+```
+
+### `git-gardener move`
+Move a worktree to a new location.
+
+```bash
+# Move worktree to new path
+git-gardener move feature-auth ../new-location/feature-auth
+```
+
+### `git-gardener completion`
+Generate shell completion scripts.
+
+```bash
+# Generate completion for specific shell
+git-gardener completion bash
+git-gardener completion zsh
+git-gardener completion fish
+```
+
+**Usage:**
+- Outputs completion script to stdout
+- Can be redirected to appropriate completion directory
+- Works with all major shells (Bash, Zsh, Fish)
+
 ### `git-gardener init`
-Initialize git-gardener configuration file.
+Initialize git-gardener configuration file and create .gardener folder.
 
 ```bash
 git-gardener init
 git-gardener init --force  # Overwrite existing config
 ```
+
+**Features:**
+- Creates `.gardener` directory for worktrees
+- Adds `.gardener/` to `.gitignore` automatically
+- Generates default configuration file
 
 ## Configuration
 

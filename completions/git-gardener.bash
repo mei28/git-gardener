@@ -7,7 +7,7 @@ _git_gardener() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
     # Main commands
-    local commands="init add list config clean pull-all tui cd remove prune move help"
+    local commands="init add list config clean pull-all tui cd remove prune move completion help"
     
     # Options for different commands
     case "${COMP_CWORD}" in
@@ -109,6 +109,12 @@ _git_gardener() {
                     elif [[ ${COMP_CWORD} -eq 3 ]]; then
                         # Complete directory paths for second argument
                         COMPREPLY=( $(compgen -d -- ${cur}) )
+                    fi
+                    ;;
+                completion)
+                    # Complete shell names
+                    if [[ ${COMP_CWORD} -eq 2 ]]; then
+                        COMPREPLY=( $(compgen -W "bash zsh fish" -- ${cur}) )
                     fi
                     ;;
                 *)

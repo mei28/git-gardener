@@ -126,6 +126,13 @@ pub enum Commands {
         /// New path for the worktree
         new_path: PathBuf,
     },
+    
+    /// Generate shell completion scripts
+    Completion {
+        /// Shell to generate completion for
+        #[arg(value_enum)]
+        shell: crate::commands::completion::CompletionShell,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -142,3 +149,4 @@ pub enum ConfigSubcommands {
         value: String,
     },
 }
+

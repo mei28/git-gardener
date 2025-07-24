@@ -82,6 +82,11 @@ _git_gardener() {
                         '1: :_git_gardener_worktrees' \
                         '2: :_directories'
                     ;;
+                completion)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '1: :(bash zsh fish)'
+                    ;;
             esac
             ;;
     esac
@@ -101,6 +106,7 @@ _git_gardener_commands() {
         'remove:Remove a worktree'
         'prune:Prune worktree information'
         'move:Move a worktree to a new location'
+        'completion:Generate shell completion scripts'
         'help:Print help information'
     )
     _describe 'commands' commands

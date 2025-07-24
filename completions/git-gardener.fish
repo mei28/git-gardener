@@ -27,6 +27,7 @@ complete -f -c git-gardener -n '__fish_use_subcommand' -a 'cd' -d 'Change to wor
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'remove' -d 'Remove a worktree'
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'prune' -d 'Prune worktree information'
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'move' -d 'Move a worktree to a new location'
+complete -f -c git-gardener -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completion scripts'
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'help' -d 'Print help information'
 
 # Global options
@@ -81,3 +82,6 @@ complete -c git-gardener -n '__fish_seen_subcommand_from prune' -l dry-run -d 'S
 # move command - complete with worktree names and directories
 complete -c git-gardener -n '__fish_seen_subcommand_from move; and test (count (commandline -opc)) -eq 2' -a '(__git_gardener_worktrees)' -d 'Worktree name'
 complete -c git-gardener -n '__fish_seen_subcommand_from move; and test (count (commandline -opc)) -eq 3' -a '(__fish_complete_directories)' -d 'New path'
+
+# completion command - complete with shell names
+complete -c git-gardener -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish' -d 'Shell type'

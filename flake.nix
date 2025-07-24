@@ -53,6 +53,17 @@
           # Skip tests during build (they require a git repository setup)
           doCheck = false;
           
+          # Install shell completions
+          postInstall = ''
+            # Install completions
+            installShellCompletion --cmd git-gardener \
+              --bash completions/git-gardener.bash \
+              --zsh completions/git-gardener.zsh \
+              --fish completions/git-gardener.fish
+          '';
+          
+          nativeBuildInputs = nativeBuildInputs ++ [ pkgs.installShellFiles ];
+          
           meta = with pkgs.lib; {
             description = "A powerful Git worktree management tool with TUI interface";
             homepage = "https://github.com/mei28/git-gardener";

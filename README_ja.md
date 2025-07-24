@@ -10,12 +10,13 @@ Git worktreeの管理を簡単にする強力なツールです。並行開発�
 
 ## 特徴
 
-- **簡単なWorktree作成**: 最小限のコマンドでworktreeを作成
+- **簡単なWorktree作成**: 最小限のコマンドでworktreeを作成、.gardenerフォルダの自動セットアップ
 - **インテリジェントなクリーンアップ**: マージ済みや古いworktreeを自動検出・削除
+- **完全なWorktree管理**: 専用コマンドでworktreeの削除、プルーン、移動が可能
+- **スマートタブ補完**: `-b`フラグ使用時のブランチ名補完とコンテキスト補完
 - **並列操作**: 並列処理で全worktreeを同時にpull
-- **対話式TUI**: フル機能のターミナルインターフェースによるビジュアルworktree管理
-- **エディタ連携**: ワンキーでお好みのエディタでworktreeを開く
-- **柔軟な設定**: TOMLファイルによるリポジトリごとのカスタマイズ
+- **対話式TUI**: フル機能のターミナルインターフェースでディレクトリナビゲーション
+- **柔軟な設定**: TOMLファイルによるリポジトリごとのカスタマイズ、.gitignore自動管理
 - **スマート検出**: マージ済みブランチや古いコミットを自動識別
 
 ## インストール
@@ -58,6 +59,31 @@ cp target/release/git-gardener /usr/local/bin/
 ### シェル補完
 コマンドとworktree名のタブ補完を有効にします：
 
+#### オプション1: 内蔵completionコマンドを使用（Nixユーザー推奨）
+
+```bash
+# シェル用の補完を生成・インストール
+git-gardener completion bash > ~/.local/share/bash-completion/completions/git-gardener
+git-gardener completion zsh > ~/.local/share/zsh/site-functions/_git-gardener
+git-gardener completion fish > ~/.config/fish/completions/git-gardener.fish
+
+# またはパイプで直接インストール
+# Bash用:
+git-gardener completion bash | sudo tee /etc/bash_completion.d/git-gardener
+
+# Zsh用（.zshrcに追加）:
+mkdir -p ~/.local/share/zsh/site-functions
+git-gardener completion zsh > ~/.local/share/zsh/site-functions/_git-gardener
+echo "fpath=(~/.local/share/zsh/site-functions \$fpath)" >> ~/.zshrc
+echo "autoload -U compinit && compinit" >> ~/.zshrc
+
+# Fish用:
+mkdir -p ~/.config/fish/completions
+git-gardener completion fish > ~/.config/fish/completions/git-gardener.fish
+```
+
+#### オプション2: インストールスクリプトを使用（開発・ソースビルド用）
+
 ```bash
 # シェル用の補完をインストール
 ./scripts/install-completions.sh
@@ -76,6 +102,7 @@ cp target/release/git-gardener /usr/local/bin/
 
 **機能:**
 - 全コマンドとオプションのタブ補完
+- `-b <TAB>`フラグ使用時のブランチ名自動補完
 - `git-gardener cd <TAB>`でworktree名の自動補完
 - コマンドごとのスマートなコンテキスト補完
 
@@ -224,17 +251,66 @@ git-gardener tui
   - `p` - 選択されたworktreeで最新変更をpull
   - `c` - worktreeをクリーンアップ（merged/staleオプション選択）
   - `n` - 選択されたworktreeに移動（cdパスを表示）
-  - `Enter` - 設定されたエディタでworktreeを開く
+  - `Enter` - 選択されたworktreeディレクトリに移動（cdパスを出力）
 - **リアルタイムステータス**: worktreeの状態を表示（Clean、Dirty、Ahead、Behind、Diverged）
 - **スマートクリーンアップ**: クリーンアップ条件の対話的選択
 
+### `git-gardener remove`
+特定のworktreeを削除します。
+
+```bash
+# worktreeを安全に削除
+git-gardener remove feature-auth
+
+# 未コミットの変更があっても強制削除
+git-gardener remove feature-auth --force
+```
+
+**オプション:**
+- `-f, --force`: 未コミットの変更があっても強制削除
+
+### `git-gardener prune`
+削除されたディレクトリのworktreeレコードを削除します。
+
+```bash
+git-gardener prune
+```
+
+### `git-gardener move`
+worktreeを新しい場所に移動します。
+
+```bash
+# worktreeを新しいパスに移動
+git-gardener move feature-auth ../new-location/feature-auth
+```
+
+### `git-gardener completion`
+シェル補完スクリプトを生成します。
+
+```bash
+# 特定のシェル用の補完を生成
+git-gardener completion bash
+git-gardener completion zsh
+git-gardener completion fish
+```
+
+**使用方法:**
+- 補完スクリプトを標準出力に出力
+- 適切な補完ディレクトリにリダイレクト可能
+- 主要シェル（Bash、Zsh、Fish）に対応
+
 ### `git-gardener init`
-git-gardener設定ファイルを初期化します。
+git-gardener設定ファイルを初期化し、.gardenerフォルダを作成します。
 
 ```bash
 git-gardener init
 git-gardener init --force  # 既存の設定を上書き
 ```
+
+**機能:**
+- worktree用の`.gardener`ディレクトリを作成
+- `.gardener/`を`.gitignore`に自動追加
+- デフォルト設定ファイルを生成
 
 ## 設定
 
