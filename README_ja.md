@@ -20,6 +20,32 @@ Git worktreeの管理を簡単にする強力なツールです。並行開発�
 
 ## インストール
 
+### Nixを使用（推奨）
+
+Nixフレークを使用した再現可能なビルド:
+
+```bash
+# リポジトリから直接インストール
+nix profile install github:your-username/git-gardener
+
+# またはクローンしてローカルでビルド
+git clone https://github.com/your-username/git-gardener.git
+cd git-gardener
+nix build
+./result/bin/git-gardener --help
+```
+
+### Nixでの開発環境
+
+```bash
+# 依存関係を含む開発シェルに入る
+nix develop
+
+# またはdirenvで自動環境読み込み
+echo "use flake" > .envrc
+direnv allow
+```
+
 ### ソースからビルド
 
 ```bash
@@ -31,6 +57,7 @@ cp target/release/git-gardener /usr/local/bin/
 
 ### 必要な環境
 
+- Nix（推奨、フレーク機能有効）、または
 - Rust 1.75以降
 - Git
 

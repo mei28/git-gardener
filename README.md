@@ -20,6 +20,32 @@ A powerful Git worktree management tool that simplifies parallel development wor
 
 ## Installation
 
+### With Nix (Recommended)
+
+Using Nix flakes for reproducible builds:
+
+```bash
+# Install directly from the repository
+nix profile install github:your-username/git-gardener
+
+# Or clone and build locally
+git clone https://github.com/your-username/git-gardener.git
+cd git-gardener
+nix build
+./result/bin/git-gardener --help
+```
+
+### Development with Nix
+
+```bash
+# Enter development shell with all dependencies
+nix develop
+
+# Or use direnv for automatic environment loading
+echo "use flake" > .envrc
+direnv allow
+```
+
 ### From Source
 
 ```bash
@@ -31,6 +57,7 @@ cp target/release/git-gardener /usr/local/bin/
 
 ### Prerequisites
 
+- Nix (recommended) with flakes enabled, or
 - Rust 1.75 or later
 - Git
 
