@@ -26,10 +26,10 @@ Using Nix flakes for reproducible builds:
 
 ```bash
 # Install directly from the repository
-nix profile install github:your-username/git-gardener
+nix profile install github:mei28/git-gardener
 
 # Or clone and build locally
-git clone https://github.com/your-username/git-gardener.git
+git clone https://github.com/mei28/git-gardener.git
 cd git-gardener
 nix build
 ./result/bin/git-gardener --help

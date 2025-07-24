@@ -26,10 +26,10 @@ Nixフレークを使用した再現可能なビルド:
 
 ```bash
 # リポジトリから直接インストール
-nix profile install github:your-username/git-gardener
+nix profile install github:mei28/git-gardener
 
 # またはクローンしてローカルでビルド
-git clone https://github.com/your-username/git-gardener.git
+git clone https://github.com/mei28/git-gardener.git
 cd git-gardener
 nix build
 ./result/bin/git-gardener --help

@@ -55,7 +55,7 @@
           
           meta = with pkgs.lib; {
             description = "A powerful Git worktree management tool with TUI interface";
-            homepage = "https://github.com/your-username/git-gardener";
+            homepage = "https://github.com/mei28/git-gardener";
             license = licenses.mit;
             maintainers = [ ];
             platforms = platforms.unix;
