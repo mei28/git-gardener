@@ -47,18 +47,21 @@ impl GitWorktree {
         create_branch: bool,
     ) -> Result<()> {
         if create_branch {
-            // 新しいブランチを作成
-            let head = self.repo.head()?;
-            let commit = head.peel_to_commit()?;
-            let _branch = self.repo.branch(branch_name, &commit, false)?;
+            // 新しいブランチを作成（ブランチが存在しない場合のみ）
+            if !self.branch_exists(branch_name)? {
+                let head = self.repo.head()?;
+                let commit = head.peel_to_commit()?;
+                let _branch = self.repo.branch(branch_name, &commit, false)?;
+            }
         }
         
-        // worktreeを作成
-        // git2の仕様により、ブランチはWorktreeAddOptionsではなく、
-        // 作成後に別途チェックアウトする必要がある
-        let _worktree = self.repo.worktree(name, path, None)?;
+        // worktree作成オプションを設定
+        let worktree_options = git2::WorktreeAddOptions::new();
         
-        // worktreeのリポジトリを開いて、ブランチをチェックアウト
+        // worktreeを作成（シンプルな方法）
+        let _worktree = self.repo.worktree(name, path, Some(&worktree_options))?;
+        
+        // worktreeのリポジトリを開いて、指定されたブランチをチェックアウト
         let worktree_repo = Repository::open(path)?;
         let branch_ref = format!("refs/heads/{}", branch_name);
         

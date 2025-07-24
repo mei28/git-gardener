@@ -52,8 +52,7 @@ impl AddCommand {
         let worktree_path = if let Some(ref path) = self.path {
             path.clone()
         } else {
-            repo_root.parent()
-                .unwrap_or(&repo_root)
+            repo_root
                 .join(&config.defaults.root_dir)
                 .join(&self.branch.replace('/', "-"))
         };
