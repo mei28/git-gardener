@@ -43,10 +43,39 @@ impl ConfigCommand {
         Ok(())
     }
     
-    fn set_config(&self, _key: &str, _value: &str) -> Result<()> {
-        // TODO: set機能の実装は後のフェーズで
-        Err(GitGardenerError::Custom(
-            "Config set feature is not implemented yet.".to_string()
-        ))
+    fn set_config(&self, key: &str, value: &str) -> Result<()> {
+        // 🟢 GREEN: 実際の設定変更実装
+        let git_worktree = GitWorktree::new()?;
+        let repo_root = git_worktree.get_repository_root()?;
+        let config_path = Config::get_config_path(&repo_root);
+        
+        // 設定ファイルが存在しない場合は作成
+        if !config_path.exists() {
+            Config::create_default_config_file(&repo_root)?;
+        }
+        
+        // 設定を読み込み
+        let mut config = Config::load_from_file(&config_path)?;
+        
+        // キーに基づいて値を設定
+        match key {
+            "defaults.root_dir" => {
+                config.defaults.root_dir = value.to_string();
+            }
+            "defaults.editor" => {
+                config.defaults.editor = Some(value.to_string());
+            }
+            _ => {
+                return Err(GitGardenerError::Custom(
+                    format!("Unknown config key: {}", key)
+                ));
+            }
+        }
+        
+        // 設定を保存
+        config.save_to_file(&config_path)?;
+        
+        println!("Set {}: {}", key, value);
+        Ok(())
     }
 }
