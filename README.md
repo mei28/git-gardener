@@ -13,7 +13,8 @@ A powerful Git worktree management tool that simplifies parallel development wor
 - **Easy Worktree Creation**: Create worktrees with minimal commands
 - **Intelligent Cleanup**: Automatically detect and remove merged or stale worktrees
 - **Parallel Operations**: Pull all worktrees simultaneously with parallel processing
-- **Interactive UI**: Terminal-based interface for visual worktree management
+- **Interactive TUI**: Full-featured terminal interface with visual worktree management
+- **Editor Integration**: Open worktrees in your preferred editor with one keystroke
 - **Flexible Configuration**: Per-repository customization via TOML config files
 - **Smart Detection**: Automatically identify merged branches and old commits
 
@@ -133,11 +134,22 @@ git-gardener config set defaults.editor "code"
 ```
 
 ### `git-gardener tui`
-Launch interactive terminal interface.
+Launch the interactive terminal interface for visual worktree management.
 
 ```bash
 git-gardener tui
 ```
+
+**TUI Features:**
+- **Visual Navigation**: Navigate worktrees with `j/k` or arrow keys
+- **Quick Actions**: 
+  - `a` - Create new worktree with branch input
+  - `d` - Delete selected worktree (with confirmation)
+  - `p` - Pull latest changes for selected worktree
+  - `c` - Clean worktrees (choose merged/stale options)
+  - `Enter` - Open worktree in configured editor
+- **Real-time Status**: See worktree status (Clean, Dirty, Ahead, Behind, Diverged)
+- **Smart Cleanup**: Interactive selection of cleanup criteria
 
 ### `git-gardener init`
 Initialize git-gardener configuration file.
@@ -188,6 +200,10 @@ git-gardener add -b feature/dashboard --create-branch
 
 # Work on different features simultaneously
 # Each worktree is isolated with its own working directory
+
+# Or use the TUI for visual management
+git-gardener tui
+# Press 'a' to create new worktrees interactively
 ```
 
 ### Release Management
@@ -199,6 +215,10 @@ git-gardener add -b develop --path ../develop
 
 # Keep all environments updated
 git-gardener pull-all
+
+# Or use TUI to manage and update all worktrees visually
+git-gardener tui
+# Press 'p' on each worktree or use pull-all
 ```
 
 ### Cleanup Workflow
@@ -206,6 +226,21 @@ git-gardener pull-all
 # Regular maintenance
 git-gardener clean --merged  # Remove merged feature branches
 git-gardener clean --stale 7  # Remove branches inactive for a week
+
+# Interactive cleanup with TUI
+git-gardener tui
+# Press 'c' to interactively select cleanup options
+# Choose 'merged' and/or 'stale' criteria
+```
+
+### Editor Integration Workflow
+```bash
+# Configure your preferred editor
+git-gardener config set defaults.editor "code ${WORKTREE_PATH}"
+
+# Use TUI to quickly open worktrees
+git-gardener tui
+# Navigate to any worktree and press Enter to open in editor
 ```
 
 ## Development

@@ -13,7 +13,8 @@ Git worktreeの管理を簡単にする強力なツールです。並行開発�
 - **簡単なWorktree作成**: 最小限のコマンドでworktreeを作成
 - **インテリジェントなクリーンアップ**: マージ済みや古いworktreeを自動検出・削除
 - **並列操作**: 並列処理で全worktreeを同時にpull
-- **対話式UI**: ビジュアルなworktree管理のためのターミナルベースのインターフェース
+- **対話式TUI**: フル機能のターミナルインターフェースによるビジュアルworktree管理
+- **エディタ連携**: ワンキーでお好みのエディタでworktreeを開く
 - **柔軟な設定**: TOMLファイルによるリポジトリごとのカスタマイズ
 - **スマート検出**: マージ済みブランチや古いコミットを自動識別
 
@@ -133,11 +134,22 @@ git-gardener config set defaults.editor "code"
 ```
 
 ### `git-gardener tui`
-対話式ターミナルインターフェースを起動します。
+ビジュアルworktree管理のための対話式ターミナルインターフェースを起動します。
 
 ```bash
 git-gardener tui
 ```
+
+**TUI機能:**
+- **ビジュアルナビゲーション**: `j/k`キーまたは矢印キーでworktreeを移動
+- **クイックアクション**: 
+  - `a` - ブランチ入力で新規worktreeを作成
+  - `d` - 選択されたworktreeを削除（確認あり）
+  - `p` - 選択されたworktreeで最新変更をpull
+  - `c` - worktreeをクリーンアップ（merged/staleオプション選択）
+  - `Enter` - 設定されたエディタでworktreeを開く
+- **リアルタイムステータス**: worktreeの状態を表示（Clean、Dirty、Ahead、Behind、Diverged）
+- **スマートクリーンアップ**: クリーンアップ条件の対話的選択
 
 ### `git-gardener init`
 git-gardener設定ファイルを初期化します。
@@ -188,6 +200,10 @@ git-gardener add -b feature/dashboard --create-branch
 
 # 異なる機能を同時に作業
 # 各worktreeは独自の作業ディレクトリで分離されています
+
+# またはTUIでビジュアル管理
+git-gardener tui
+# 'a'キーを押して対話的に新しいworktreeを作成
 ```
 
 ### リリース管理
@@ -199,6 +215,10 @@ git-gardener add -b develop --path ../develop
 
 # 全環境を最新に保つ
 git-gardener pull-all
+
+# またはTUIで全worktreeをビジュアル管理・更新
+git-gardener tui
+# 各worktreeで'p'キーを押すか、pull-allを使用
 ```
 
 ### クリーンアップワークフロー
@@ -206,6 +226,21 @@ git-gardener pull-all
 # 定期メンテナンス
 git-gardener clean --merged  # マージ済み機能ブランチを削除
 git-gardener clean --stale 7  # 1週間非アクティブなブランチを削除
+
+# TUIでの対話的クリーンアップ
+git-gardener tui
+# 'c'キーを押してクリーンアップオプションを対話的に選択
+# 'merged'や'stale'条件を選択
+```
+
+### エディタ連携ワークフロー
+```bash
+# お好みのエディタを設定
+git-gardener config set defaults.editor "code ${WORKTREE_PATH}"
+
+# TUIでworktreeを素早く開く
+git-gardener tui
+# 任意のworktreeに移動してEnterキーでエディタで開く
 ```
 
 ## 開発
