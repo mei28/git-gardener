@@ -7,7 +7,7 @@ _git_gardener() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
     # Main commands
-    local commands="init add list config clean pull-all tui cd help"
+    local commands="init add list config clean pull-all tui cd remove prune move help"
     
     # Options for different commands
     case "${COMP_CWORD}" in
@@ -29,7 +29,9 @@ _git_gardener() {
                 add)
                     case "${prev}" in
                         -b|--branch)
-                            # No completion for branch names (user input)
+                            # Complete branch names from git
+                            local branches=$(git branch 2>/dev/null | sed 's/^[ *]*//')
+                            COMPREPLY=( $(compgen -W "${branches}" -- ${cur}) )
                             ;;
                         -p|--path)
                             # Complete directory paths
@@ -82,6 +84,32 @@ _git_gardener() {
                     # Complete TUI options
                     local opts="--fullscreen --no-mouse -h --help"
                     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    ;;
+                remove)
+                    # Complete worktree names for remove command
+                    if [[ ${COMP_CWORD} -eq 2 ]]; then
+                        local worktrees=$(git-gardener list --names-only 2>/dev/null)
+                        COMPREPLY=( $(compgen -W "${worktrees}" -- ${cur}) )
+                    else
+                        # Complete options
+                        local opts="-f --force -h --help"
+                        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    fi
+                    ;;
+                prune)
+                    # Complete prune options
+                    local opts="--dry-run -h --help"
+                    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+                    ;;
+                move)
+                    if [[ ${COMP_CWORD} -eq 2 ]]; then
+                        # Complete worktree names for first argument
+                        local worktrees=$(git-gardener list --names-only 2>/dev/null)
+                        COMPREPLY=( $(compgen -W "${worktrees}" -- ${cur}) )
+                    elif [[ ${COMP_CWORD} -eq 3 ]]; then
+                        # Complete directory paths for second argument
+                        COMPREPLY=( $(compgen -d -- ${cur}) )
+                    fi
                     ;;
                 *)
                     # Global options

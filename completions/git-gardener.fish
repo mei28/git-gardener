@@ -10,6 +10,11 @@ function __git_gardener_remotes
     git remote 2>/dev/null
 end
 
+# Helper function to get git branches
+function __git_gardener_branches
+    git branch 2>/dev/null | sed 's/^[ *]*//'
+end
+
 # Main command completions
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'init' -d 'Initialize git-gardener configuration'
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'add' -d 'Create a new worktree'
@@ -19,6 +24,9 @@ complete -f -c git-gardener -n '__fish_use_subcommand' -a 'clean' -d 'Clean up w
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'pull-all' -d 'Pull all worktrees'
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'tui' -d 'Launch interactive TUI'
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'cd' -d 'Change to worktree directory'
+complete -f -c git-gardener -n '__fish_use_subcommand' -a 'remove' -d 'Remove a worktree'
+complete -f -c git-gardener -n '__fish_use_subcommand' -a 'prune' -d 'Prune worktree information'
+complete -f -c git-gardener -n '__fish_use_subcommand' -a 'move' -d 'Move a worktree to a new location'
 complete -f -c git-gardener -n '__fish_use_subcommand' -a 'help' -d 'Print help information'
 
 # Global options
@@ -30,7 +38,7 @@ complete -c git-gardener -s V -l version -d 'Show version'
 complete -c git-gardener -n '__fish_seen_subcommand_from init' -s f -l force -d 'Overwrite existing config file'
 
 # add command
-complete -c git-gardener -n '__fish_seen_subcommand_from add' -s b -l branch -d 'Branch name' -r
+complete -c git-gardener -n '__fish_seen_subcommand_from add' -s b -l branch -d 'Branch name' -r -a '(__git_gardener_branches)'
 complete -c git-gardener -n '__fish_seen_subcommand_from add' -s p -l path -d 'Path' -r -a '(__fish_complete_directories)'
 complete -c git-gardener -n '__fish_seen_subcommand_from add' -l upstream -d 'Set upstream remote' -r -a '(__git_gardener_remotes)'
 complete -c git-gardener -n '__fish_seen_subcommand_from add' -s c -l create-branch -d 'Create a new branch'
@@ -62,3 +70,14 @@ complete -c git-gardener -n '__fish_seen_subcommand_from tui' -l no-mouse -d 'Di
 
 # cd command - complete with worktree names
 complete -c git-gardener -n '__fish_seen_subcommand_from cd' -a '(__git_gardener_worktrees)' -d 'Worktree name'
+
+# remove command - complete with worktree names
+complete -c git-gardener -n '__fish_seen_subcommand_from remove' -s f -l force -d 'Force removal'
+complete -c git-gardener -n '__fish_seen_subcommand_from remove' -a '(__git_gardener_worktrees)' -d 'Worktree name'
+
+# prune command
+complete -c git-gardener -n '__fish_seen_subcommand_from prune' -l dry-run -d 'Show what would be removed'
+
+# move command - complete with worktree names and directories
+complete -c git-gardener -n '__fish_seen_subcommand_from move; and test (count (commandline -opc)) -eq 2' -a '(__git_gardener_worktrees)' -d 'Worktree name'
+complete -c git-gardener -n '__fish_seen_subcommand_from move; and test (count (commandline -opc)) -eq 3' -a '(__fish_complete_directories)' -d 'New path'

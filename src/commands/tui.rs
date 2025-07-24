@@ -453,7 +453,7 @@ impl TuiState {
                     TuiAction::Navigate => "[Enter] confirm navigate  [Esc] cancel".to_string(),
                 }
             }
-            None => "[j/k,↓/↑] navigate  [g/G] first/last  [a] add  [d] delete  [p] pull  [c] clean  [n] navigate  [Enter] open  [q] quit".to_string(),
+            None => "[j/k,↓/↑] navigate  [g/G] first/last  [a] add  [d] delete  [p] pull  [c] clean  [n] navigate  [Enter] go to directory  [q] quit".to_string(),
         }
     }
 }
@@ -567,22 +567,34 @@ impl TuiCommand {
                                 }
                             }
                             // ダイアログが無効な入力の場合は開いたまま
-                        } else if let Some(_) = &state.current_action {
-                            // アクションが設定されているがダイアログではない場合（p, c等）
-                            match state.execute_current_action("") {
-                                Ok(message) => {
-                                    tracing::info!("Action executed: {}", message);
-                                    state.set_status_message(format!("Success: {}", message));
+                        } else if let Some(action) = &state.current_action.clone() {
+                            // アクションが設定されているがダイアログではない場合（p, n等）
+                            match action {
+                                TuiAction::Navigate => {
+                                    // navigate actionの場合は、TUIを終了して結果を出力
+                                    if let Ok(message) = state.execute_current_action("") {
+                                        println!("{}", message.replace("Navigate to: ", ""));
+                                        return Ok(());
+                                    }
                                 },
-                                Err(e) => {
-                                    tracing::error!("Action failed: {}", e);
-                                    state.set_status_message(format!("Error: {}", e));
+                                _ => {
+                                    // その他のアクション
+                                    match state.execute_current_action("") {
+                                        Ok(message) => {
+                                            tracing::info!("Action executed: {}", message);
+                                            state.set_status_message(format!("Success: {}", message));
+                                        },
+                                        Err(e) => {
+                                            tracing::error!("Action failed: {}", e);
+                                            state.set_status_message(format!("Error: {}", e));
+                                        }
+                                    }
                                 }
                             }
                             state.clear_action();
                         } else {
-                            // 選択されたアイテムを開く
-                            state.set_action(Some(TuiAction::Open));
+                            // 選択されたアイテムをナビゲート（cd）
+                            state.set_action(Some(TuiAction::Navigate));
                         }
                     },
                     // ナビゲーションキーの処理（アクション選択中は無効）

@@ -23,7 +23,7 @@ _git_gardener() {
                     ;;
                 add)
                     _arguments \
-                        '(-b --branch)'{-b,--branch}'[Branch name]:branch:' \
+                        '(-b --branch)'{-b,--branch}'[Branch name]:branch:_git_gardener_branches' \
                         '(-p --path)'{-p,--path}'[Path]:path:_directories' \
                         '--upstream[Set upstream remote]:remote:_git_gardener_remotes' \
                         '(-c --create-branch)'{-c,--create-branch}'[Create a new branch]' \
@@ -65,6 +65,23 @@ _git_gardener() {
                         '(-f --force)'{-f,--force}'[Overwrite existing config file]' \
                         '(-h --help)'{-h,--help}'[Show help]'
                     ;;
+                remove)
+                    _arguments \
+                        '(-f --force)'{-f,--force}'[Force removal]' \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '1: :_git_gardener_worktrees'
+                    ;;
+                prune)
+                    _arguments \
+                        '--dry-run[Show what would be removed]' \
+                        '(-h --help)'{-h,--help}'[Show help]'
+                    ;;
+                move)
+                    _arguments \
+                        '(-h --help)'{-h,--help}'[Show help]' \
+                        '1: :_git_gardener_worktrees' \
+                        '2: :_directories'
+                    ;;
             esac
             ;;
     esac
@@ -81,6 +98,9 @@ _git_gardener_commands() {
         'pull-all:Pull all worktrees'
         'tui:Launch interactive TUI'
         'cd:Change to worktree directory'
+        'remove:Remove a worktree'
+        'prune:Prune worktree information'
+        'move:Move a worktree to a new location'
         'help:Print help information'
     )
     _describe 'commands' commands
@@ -117,6 +137,12 @@ _git_gardener_remotes() {
     local remotes
     remotes=(${(f)"$(git remote 2>/dev/null)"})
     _describe 'remotes' remotes
+}
+
+_git_gardener_branches() {
+    local branches
+    branches=(${(f)"$(git branch 2>/dev/null | sed 's/^[ *]*//')"})
+    _describe 'branches' branches
 }
 
 _git_gardener "$@"
