@@ -100,6 +100,32 @@ pub enum Commands {
         /// Worktree name to change to
         worktree_name: String,
     },
+    
+    /// Remove a worktree
+    Remove {
+        /// Name of the worktree to remove
+        worktree_name: String,
+        
+        /// Force removal even if worktree has uncommitted changes
+        #[arg(short = 'f', long = "force")]
+        force: bool,
+    },
+    
+    /// Prune worktree information
+    Prune {
+        /// Only show what would be removed
+        #[arg(long = "dry-run")]
+        dry_run: bool,
+    },
+    
+    /// Move a worktree to a new location
+    Move {
+        /// Name of the worktree to move
+        worktree_name: String,
+        
+        /// New path for the worktree
+        new_path: PathBuf,
+    },
 }
 
 #[derive(Subcommand, Debug)]

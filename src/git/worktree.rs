@@ -41,38 +41,28 @@ impl GitWorktree {
     
     pub fn create_worktree(
         &self,
-        name: &str,
+        _name: &str,
         path: &Path,
         branch_name: &str,
         create_branch: bool,
     ) -> Result<()> {
-        if create_branch {
-            // 新しいブランチを作成（ブランチが存在しない場合のみ）
-            if !self.branch_exists(branch_name)? {
-                let head = self.repo.head()?;
-                let commit = head.peel_to_commit()?;
-                let _branch = self.repo.branch(branch_name, &commit, false)?;
-            }
+        // 🟢 GREEN: worktree作成の修正版
+        if create_branch && !self.branch_exists(branch_name)? {
+            // 新しいブランチを作成
+            let head = self.repo.head()?;
+            let commit = head.peel_to_commit()?;
+            let _branch = self.repo.branch(branch_name, &commit, false)?;
         }
         
-        // worktree作成オプションを設定
-        let worktree_options = git2::WorktreeAddOptions::new();
+        // gitコマンドを使用してworktreeを作成（より安定した方法）
+        let output = std::process::Command::new("git")
+            .args(&["worktree", "add", &path.to_string_lossy(), branch_name])
+            .output()
+            .map_err(|e| GitGardenerError::Custom(format!("Failed to execute git worktree add: {}", e)))?;
         
-        // worktreeを作成（シンプルな方法）
-        let _worktree = self.repo.worktree(name, path, Some(&worktree_options))?;
-        
-        // worktreeのリポジトリを開いて、指定されたブランチをチェックアウト
-        let worktree_repo = Repository::open(path)?;
-        let branch_ref = format!("refs/heads/{}", branch_name);
-        
-        // ブランチを探す
-        if let Ok(reference) = worktree_repo.find_reference(&branch_ref) {
-            // ブランチが見つかったらHEADを設定
-            worktree_repo.set_head(reference.name().unwrap())?;
-            worktree_repo.checkout_head(Some(
-                git2::build::CheckoutBuilder::new()
-                    .force()
-            ))?;
+        if !output.status.success() {
+            let error_msg = String::from_utf8_lossy(&output.stderr);
+            return Err(GitGardenerError::Custom(format!("git worktree add failed: {}", error_msg)));
         }
         
         Ok(())
@@ -106,15 +96,31 @@ impl GitWorktree {
     }
     
     pub fn remove_worktree(&self, name: &str, force: bool) -> Result<()> {
-        let worktree = self.repo.find_worktree(name)
-            .map_err(|_| GitGardenerError::WorktreeNotFound { 
+        // 🟢 GREEN: git worktree removeを使用する修正版
+        let worktrees = self.list_worktrees()?;
+        let worktree_info = worktrees
+            .iter()
+            .find(|w| w.name == name)
+            .ok_or_else(|| GitGardenerError::WorktreeNotFound { 
                 name: name.to_string() 
             })?;
         
+        // gitコマンドを使用してworktreeを削除
+        let path_str = worktree_info.path.to_string_lossy();
+        let mut args = vec!["worktree", "remove"];
         if force {
-            worktree.prune(Some(&mut git2::WorktreePruneOptions::new().valid(true)))?;
-        } else {
-            worktree.prune(None)?;
+            args.push("--force");
+        }
+        args.push(&path_str);
+        
+        let output = std::process::Command::new("git")
+            .args(&args)
+            .output()
+            .map_err(|e| GitGardenerError::Custom(format!("Failed to execute git worktree remove: {}", e)))?;
+        
+        if !output.status.success() {
+            let error_msg = String::from_utf8_lossy(&output.stderr);
+            return Err(GitGardenerError::Custom(format!("git worktree remove failed: {}", error_msg)));
         }
         
         Ok(())

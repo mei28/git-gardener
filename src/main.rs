@@ -7,7 +7,7 @@ mod hooks;
 
 use clap::Parser;
 use cli::{Cli, Commands, ConfigSubcommands};
-use commands::{add::AddCommand, cd::CdCommand, clean::CleanCommand, config::{ConfigCommand, ConfigSubcommand}, init::InitCommand, list::ListCommand, pull_all::PullAllCommand, tui::TuiCommand};
+use commands::{add::AddCommand, cd::CdCommand, clean::CleanCommand, config::{ConfigCommand, ConfigSubcommand}, init::InitCommand, list::ListCommand, pull_all::PullAllCommand, tui::TuiCommand, remove::RemoveCommand, prune::PruneCommand, r#move::MoveCommand};
 use error::Result;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
@@ -88,6 +88,21 @@ fn run() -> Result<()> {
             let path = cmd.execute()?;
             println!("{}", path);
             Ok(())
+        }
+        Commands::Remove { worktree_name, force } => {
+            info!("Running remove command for worktree: {}", worktree_name);
+            let cmd = RemoveCommand::new(worktree_name, force);
+            cmd.execute()
+        }
+        Commands::Prune { dry_run } => {
+            info!("Running prune command");
+            let cmd = PruneCommand::new(dry_run);
+            cmd.execute()
+        }
+        Commands::Move { worktree_name, new_path } => {
+            info!("Running move command for worktree: {}", worktree_name);
+            let cmd = MoveCommand::new(worktree_name, new_path);
+            cmd.execute()
         }
     }
 }
