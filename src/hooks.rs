@@ -119,10 +119,6 @@ impl HookExecutor {
         Ok(())
     }
     
-    // テスト用の関数
-    pub fn mock_execute() -> bool {
-        true
-    }
 }
 
 #[cfg(test)]
