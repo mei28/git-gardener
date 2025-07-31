@@ -1,8 +1,8 @@
 /target
-.gardener/
 test-repo/
 
 .claude
 CLAUDE.md
 docs
 result
+.gardener/

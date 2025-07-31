@@ -8,10 +8,12 @@
 
 ## 特徴
 
-- **シンプルな操作**: 5つの基本コマンドでworktreeを管理
+- **簡単セットアップ**: `init` コマンドでプロジェクトをすぐに開始
+- **シンプルな操作**: 6つの基本コマンドでworktreeを管理
 - **自動パス生成**: `.gardener/branch-name` 形式で自動的にworktreeを配置
 - **フック機能**: worktree作成後の自動化処理（ファイルコピー、コマンド実行）
 - **@記号での移動**: `git-gardener cd @` でメインworktreeに瞬時に移動
+- **gitignore自動更新**: 初期化時に`.gardener/`を自動で除外設定
 
 ## インストール
 
@@ -30,6 +32,9 @@ cargo build --release
 ### 基本コマンド
 
 ```bash
+# プロジェクトを初期化（最初に実行）
+git-gardener init
+
 # 新しいブランチでworktreeを作成
 git-gardener add feature/new-feature -b
 
@@ -50,11 +55,33 @@ git-gardener remove feature/new-feature
 
 # ブランチも一緒に削除
 git-gardener remove feature/new-feature --with-branch
+
+# シェル補完を生成
+git-gardener completion bash > ~/.bash_completion.d/git-gardener
+```
+
+### 初期化
+
+プロジェクトでgit-gardenerを使い始める前に、初期化が必要です：
+
+```bash
+git-gardener init
+```
+
+このコマンドは以下を実行します：
+- `.gardener/` ディレクトリを作成
+- `.gitignore` に `.gardener/` エントリを追加
+- デフォルトの `.gardener.yml` 設定ファイルを生成
+
+既に初期化済みの場合、`--force` フラグで再初期化できます：
+
+```bash
+git-gardener init --force
 ```
 
 ### 設定ファイル
 
-プロジェクトルートに `.gardener.yml` を作成して、カスタム設定やフックを定義できます。
+`.gardener.yml` ファイルでカスタム設定やフックを定義できます。
 
 ```yaml
 version: "1.0"
@@ -113,6 +140,12 @@ just check
 
 # 特定のテストを実行
 just test-module "commands::add"
+
+# デモ実行（機能確認）
+just demo-init    # init コマンドのヘルプ
+just demo-add     # テスト用worktreeを作成
+just demo-list    # worktree一覧表示
+just demo-clean   # テスト用データを削除
 ```
 
 ### TDD（テスト駆動開発）
@@ -136,16 +169,19 @@ just test-refactor
 git-gardener/
 ├── src/
 │   ├── commands/        # コマンド実装
-│   │   ├── add.rs
-│   │   ├── cd.rs
-│   │   ├── list.rs
-│   │   └── remove.rs
+│   │   ├── init.rs      # プロジェクト初期化
+│   │   ├── add.rs       # worktree作成
+│   │   ├── list.rs      # worktree一覧
+│   │   ├── cd.rs        # worktree移動
+│   │   ├── remove.rs    # worktree削除
+│   │   └── completion.rs # シェル補完
 │   ├── config.rs        # YAML設定ファイル処理
 │   ├── git/             # Git操作
 │   │   └── worktree.rs
 │   ├── hooks.rs         # フック機能
 │   └── error.rs         # エラー型定義
-├── .gardener.yml        # 設定ファイル例
+├── .gardener/           # worktreeディレクトリ（initで作成）
+├── .gardener.yml        # 設定ファイル（initで作成）
 ├── justfile             # タスクランナー
 └── README.md
 ```

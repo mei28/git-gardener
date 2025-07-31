@@ -63,3 +63,29 @@ test-green pattern:
 # TDD用 - リファクタリング後のテスト
 test-refactor:
     just check
+
+# git-gardener コマンドをテスト
+demo:
+    cargo build
+    ./target/debug/git-gardener --help
+
+# プロジェクトの初期化をテスト
+demo-init:
+    cargo build
+    ./target/debug/git-gardener init --help
+    
+# worktreeの作成をテスト（test-branchを作成）
+demo-add:
+    cargo build
+    ./target/debug/git-gardener add test-branch -b
+
+# worktree一覧を表示
+demo-list:
+    cargo build
+    ./target/debug/git-gardener list
+
+# テスト用worktreeを削除
+demo-clean:
+    cargo build
+    ./target/debug/git-gardener remove test-branch || true
+    git branch -D test-branch || true
