@@ -7,7 +7,7 @@ mod hooks;
 
 use clap::Parser;
 use cli::{Cli, Commands};
-use commands::{add::AddCommand, cd::CdCommand, completion::CompletionCommand, list::ListCommand, remove::RemoveCommand};
+use commands::{add::AddCommand, cd::CdCommand, completion::CompletionCommand, init::InitCommand, list::ListCommand, remove::RemoveCommand};
 use error::Result;
 
 fn main() {
@@ -21,6 +21,10 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
     
     match cli.command {
+        Commands::Init { force } => {
+            let cmd = InitCommand::new(force);
+            cmd.execute()
+        }
         Commands::Add {
             branch,
             new_branch,

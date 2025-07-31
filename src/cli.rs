@@ -15,6 +15,13 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Commands {
+    /// Initialize git-gardener in the current repository
+    Init {
+        /// Force initialization even if already initialized
+        #[arg(short, long)]
+        force: bool,
+    },
+    
     /// Create a new worktree
     Add {
         /// Branch name
