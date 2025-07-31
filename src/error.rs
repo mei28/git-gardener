@@ -8,11 +8,6 @@ pub enum GitGardenerError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
     
-    #[error("TOML parsing error: {0}")]
-    TomlParse(#[from] toml::de::Error),
-    
-    #[error("TOML serialization error: {0}")]
-    TomlSerialize(#[from] toml::ser::Error),
     
     #[error("Config file not found at {path}")]
     ConfigNotFound { path: String },

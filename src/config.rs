@@ -1,56 +1,68 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use crate::error::{GitGardenerError, Result};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
+    #[serde(default = "default_version")]
+    pub version: String,
+    
     #[serde(default)]
     pub defaults: DefaultConfig,
     
-    #[serde(default)]
-    pub branches: HashMap<String, BranchConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hooks: Option<Hooks>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DefaultConfig {
-    #[serde(default = "default_root_dir")]
-    pub root_dir: String,
-    
-    #[serde(default)]
-    pub post_create: Vec<String>,
-    
-    #[serde(default)]
-    pub editor: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub root_dir: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct BranchConfig {
-    #[serde(default)]
-    pub post_create: Vec<String>,
+pub struct Hooks {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub post_create: Option<Vec<Hook>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Hook {
+    #[serde(rename = "type")]
+    pub hook_type: HookType,
+    
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from: Option<String>,
+    
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to: Option<String>,
+    
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command: Option<String>,
+    
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub env: Option<std::collections::HashMap<String, String>>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum HookType {
+    Copy,
+    Command,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
+            version: default_version(),
             defaults: DefaultConfig::default(),
-            branches: HashMap::new(),
+            hooks: None,
         }
     }
 }
 
-impl Default for DefaultConfig {
-    fn default() -> Self {
-        Self {
-            root_dir: default_root_dir(),
-            post_create: Vec::new(),
-            editor: None,
-        }
-    }
-}
-
-fn default_root_dir() -> String {
-    ".gardener".to_string()
+fn default_version() -> String {
+    "1.0".to_string()
 }
 
 impl Config {
@@ -62,12 +74,14 @@ impl Config {
         }
         
         let contents = std::fs::read_to_string(path)?;
-        let config: Config = toml::from_str(&contents)?;
+        let config: Config = serde_yaml::from_str(&contents)
+            .map_err(|e| GitGardenerError::Custom(format!("Failed to parse YAML config: {}", e)))?;
         Ok(config)
     }
     
     pub fn save_to_file(&self, path: &Path) -> Result<()> {
-        let contents = toml::to_string_pretty(self)?;
+        let contents = serde_yaml::to_string(self)
+            .map_err(|e| GitGardenerError::Custom(format!("Failed to serialize config: {}", e)))?;
         
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)?;
@@ -78,14 +92,7 @@ impl Config {
     }
     
     pub fn get_config_path(repo_path: &Path) -> PathBuf {
-        repo_path.join(".git").join("gardener.toml")
-    }
-    
-    pub fn create_default_config_file(repo_path: &Path) -> Result<PathBuf> {
-        let config_path = Self::get_config_path(repo_path);
-        let default_config = Config::default();
-        default_config.save_to_file(&config_path)?;
-        Ok(config_path)
+        repo_path.join(".gardener.yml")
     }
 }
 
@@ -97,21 +104,20 @@ mod tests {
     #[test]
     fn test_default_config() {
         let config = Config::default();
-        assert_eq!(config.defaults.root_dir, ".gardener");
-        assert!(config.defaults.post_create.is_empty());
-        assert!(config.defaults.editor.is_none());
-        assert!(config.branches.is_empty());
+        assert_eq!(config.version, "1.0");
+        assert!(config.defaults.root_dir.is_none());
+        assert!(config.hooks.is_none());
     }
     
     #[test]
     fn test_save_and_load_config() {
         let temp_dir = tempdir().unwrap();
-        let config_path = temp_dir.path().join("test_config.toml");
+        let config_path = temp_dir.path().join("test_config.yml");
         
         let config = Config::default();
         config.save_to_file(&config_path).unwrap();
         
         let loaded_config = Config::load_from_file(&config_path).unwrap();
-        assert_eq!(loaded_config.defaults.root_dir, config.defaults.root_dir);
+        assert_eq!(loaded_config.version, config.version);
     }
 }

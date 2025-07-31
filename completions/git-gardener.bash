@@ -6,6 +6,14 @@ _git_gardener() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     
+    # Check if we should complete branch names
+    if [[ ${prev} == "-b" || ${prev} == "--branch" ]]; then
+        # Only complete branch names, no files
+        local branches=$(git branch 2>/dev/null | sed 's/^[ *]*//')
+        COMPREPLY=( $(compgen -W "${branches}" -- ${cur}) )
+        return 0
+    fi
+    
     # Main commands
     local commands="init add list config clean pull-all tui cd remove prune move completion help"
     
@@ -32,6 +40,8 @@ _git_gardener() {
                             # Complete branch names from git
                             local branches=$(git branch 2>/dev/null | sed 's/^[ *]*//')
                             COMPREPLY=( $(compgen -W "${branches}" -- ${cur}) )
+                            # Disable file completion for branch names
+                            return 0
                             ;;
                         -p|--path)
                             # Complete directory paths
@@ -128,4 +138,4 @@ _git_gardener() {
 }
 
 # Register the completion function
-complete -F _git_gardener git-gardener
+complete -F _git_gardener -o nosort -o nospace git-gardener

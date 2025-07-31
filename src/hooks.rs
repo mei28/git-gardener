@@ -1,6 +1,8 @@
+use crate::config::Hook;
 use crate::error::{GitGardenerError, Result};
 use std::path::Path;
 use std::process::Command;
+use std::collections::HashMap;
 
 pub struct HookExecutor;
 
@@ -9,27 +11,68 @@ impl HookExecutor {
         Self
     }
     
-    pub fn execute_post_create(&self, worktree_path: &Path, branch: &str, commands: &[String]) -> Result<()> {
-        // 🔵 REFACTOR: 三角測量による一般化と実際の機能実装
-        
-        if commands.is_empty() {
-            return Ok(());
+    pub fn execute_hooks(&self, worktree_path: &Path, branch: &str, hooks: &[Hook]) -> Result<()> {
+        for hook in hooks {
+            match &hook.hook_type {
+                crate::config::HookType::Copy => {
+                    self.execute_copy_hook(hook, worktree_path)?;
+                }
+                crate::config::HookType::Command => {
+                    self.execute_command_hook(hook, worktree_path, branch)?;
+                }
+            }
         }
         
-        for command in commands {
-            // 環境変数を設定してコマンドを実行
-            let expanded_command = self.expand_variables(command, worktree_path, branch);
-            
-            match self.execute_shell_command(&expanded_command, worktree_path) {
-                Ok(_) => {
-                    tracing::debug!("Hook command succeeded: {}", expanded_command);
-                }
-                Err(e) => {
-                    tracing::error!("Hook command failed: {} - {}", expanded_command, e);
-                    return Err(GitGardenerError::Custom(
-                        format!("Hook command failed: {}", e)
-                    ));
-                }
+        Ok(())
+    }
+    
+    fn execute_copy_hook(&self, hook: &Hook, worktree_path: &Path) -> Result<()> {
+        let from = hook.from.as_ref()
+            .ok_or_else(|| GitGardenerError::Custom("Copy hook requires 'from' field".to_string()))?;
+        let to = hook.to.as_ref()
+            .ok_or_else(|| GitGardenerError::Custom("Copy hook requires 'to' field".to_string()))?;
+        
+        let source = Path::new(from);
+        let dest = worktree_path.join(to);
+        
+        if !source.exists() {
+            return Err(GitGardenerError::Custom(
+                format!("Source file does not exist: {}", source.display())
+            ));
+        }
+        
+        // 宛先ディレクトリを作成
+        if let Some(parent) = dest.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        
+        std::fs::copy(source, &dest)?;
+        println!("✓ Copied {} to {}", source.display(), dest.display());
+        
+        Ok(())
+    }
+    
+    fn execute_command_hook(&self, hook: &Hook, worktree_path: &Path, branch: &str) -> Result<()> {
+        let command = hook.command.as_ref()
+            .ok_or_else(|| GitGardenerError::Custom("Command hook requires 'command' field".to_string()))?;
+        
+        let expanded_command = self.expand_variables(command, worktree_path, branch);
+        
+        let mut env = HashMap::new();
+        if let Some(hook_env) = &hook.env {
+            for (key, value) in hook_env {
+                env.insert(key.clone(), self.expand_variables(value, worktree_path, branch));
+            }
+        }
+        
+        match self.execute_shell_command(&expanded_command, worktree_path, &env) {
+            Ok(_) => {
+                println!("✓ Executed: {}", expanded_command);
+            }
+            Err(e) => {
+                return Err(GitGardenerError::Custom(
+                    format!("Command failed: {}", e)
+                ));
             }
         }
         
@@ -44,7 +87,7 @@ impl HookExecutor {
             .replace("${REPO_ROOT}", &worktree_path.parent().unwrap_or(worktree_path).display().to_string())
     }
     
-    fn execute_shell_command(&self, command: &str, working_dir: &Path) -> Result<()> {
+    fn execute_shell_command(&self, command: &str, working_dir: &Path, env: &HashMap<String, String>) -> Result<()> {
         // POSIXシェルでコマンドを実行
         let mut cmd = if cfg!(target_os = "windows") {
             let mut cmd = Command::new("cmd");
@@ -60,6 +103,9 @@ impl HookExecutor {
         if working_dir.exists() {
             cmd.current_dir(working_dir);
         }
+        
+        // 環境変数を設定
+        cmd.envs(env);
         
         let output = cmd.output()?;
         

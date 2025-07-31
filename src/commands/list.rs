@@ -2,13 +2,12 @@ use crate::error::Result;
 use crate::git::GitWorktree;
 
 pub struct ListCommand {
-    pub all: bool,
     pub names_only: bool,
 }
 
 impl ListCommand {
-    pub fn new(all: bool, names_only: bool) -> Self {
-        Self { all, names_only }
+    pub fn new(names_only: bool) -> Self {
+        Self { names_only }
     }
     
     pub fn execute(&self) -> Result<()> {
@@ -25,34 +24,18 @@ impl ListCommand {
         if self.names_only {
             // Shell completion用にworktree名のみを出力
             for worktree in worktrees {
-                if !self.all && worktree.is_prunable {
-                    continue;
-                }
-                println!("{}", worktree.name);
+                println!("{}", worktree.branch);
             }
         } else {
             // 通常の表形式表示
-            println!("{:<20} {:<40} {:<15}", "NAME", "PATH", "BRANCH");
-            println!("{}", "-".repeat(75));
+            println!("{:<30} {:<50}", "BRANCH", "PATH");
+            println!("{}", "-".repeat(80));
             
             for worktree in worktrees {
-                // prune済みのworktreeを表示するかどうか
-                if !self.all && worktree.is_prunable {
-                    continue;
-                }
-                
-                let status = if worktree.is_prunable {
-                    " (prunable)"
-                } else {
-                    ""
-                };
-                
                 println!(
-                    "{:<20} {:<40} {:<15}{}",
-                    worktree.name,
-                    worktree.path.display(),
+                    "{:<30} {:<50}",
                     worktree.branch,
-                    status
+                    worktree.path.display()
                 );
             }
         }

@@ -68,6 +68,44 @@ impl GitWorktree {
         Ok(())
     }
     
+    pub fn create_worktree_with_commit(
+        &self,
+        _name: &str,
+        path: &Path,
+        branch_name: &str,
+        create_branch: bool,
+        commit: Option<&str>,
+    ) -> Result<()> {
+        // gitコマンドを使用してworktreeを作成
+        let mut args = vec!["worktree", "add"];
+        
+        if create_branch {
+            args.push("-b");
+            args.push(branch_name);
+        }
+        
+        let path_str = path.to_string_lossy();
+        args.push(&path_str);
+        
+        if !create_branch {
+            args.push(branch_name);
+        } else if let Some(commit) = commit {
+            args.push(commit);
+        }
+        
+        let output = std::process::Command::new("git")
+            .args(&args)
+            .output()
+            .map_err(|e| GitGardenerError::Custom(format!("Failed to execute git worktree add: {}", e)))?;
+        
+        if !output.status.success() {
+            let error_msg = String::from_utf8_lossy(&output.stderr);
+            return Err(GitGardenerError::Custom(format!("git worktree add failed: {}", error_msg)));
+        }
+        
+        Ok(())
+    }
+    
     pub fn list_worktrees(&self) -> Result<Vec<WorktreeInfo>> {
         let worktrees = self.repo.worktrees()?;
         let mut infos = Vec::new();

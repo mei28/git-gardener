@@ -1,0 +1,12 @@
+version: "1.0"
+defaults:
+  base_dir: ".gardener"
+
+hooks:
+  post_create:
+    - type: copy
+      from: "README.md"
+      to: "README.md"
+    
+    - type: command
+      command: "echo 'Worktree created at ${WORKTREE_PATH} for branch ${BRANCH}'"
