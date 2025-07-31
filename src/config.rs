@@ -120,4 +120,116 @@ mod tests {
         let loaded_config = Config::load_from_file(&config_path).unwrap();
         assert_eq!(loaded_config.version, config.version);
     }
+    
+    #[test]
+    fn test_config_load_fails_for_nonexistent_file() {
+        // What: 存在しないファイルを読み込もうとした場合にエラーが返されるかテスト
+        let temp_dir = tempdir().unwrap();
+        let config_path = temp_dir.path().join("nonexistent.yml");
+        
+        let result = Config::load_from_file(&config_path);
+        
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            GitGardenerError::ConfigNotFound { .. }
+        ));
+    }
+    
+    #[test]
+    fn test_config_with_hooks_serialization() {
+        // What: フック設定を含むconfigの直列化・逆直列化が正しく動作するかテスト
+        use std::collections::HashMap;
+        
+        let mut env = HashMap::new();
+        env.insert("NODE_ENV".to_string(), "development".to_string());
+        
+        let hook = Hook {
+            hook_type: HookType::Command,
+            from: None,
+            to: None,
+            command: Some("npm install".to_string()),
+            env: Some(env),
+        };
+        
+        let hooks = Hooks {
+            post_create: Some(vec![hook]),
+        };
+        
+        let config = Config {
+            version: "1.0".to_string(),
+            defaults: DefaultConfig {
+                root_dir: Some(".gardener".to_string()),
+            },
+            hooks: Some(hooks),
+        };
+        
+        let temp_dir = tempdir().unwrap();
+        let config_path = temp_dir.path().join("hooks_config.yml");
+        
+        config.save_to_file(&config_path).unwrap();
+        let loaded_config = Config::load_from_file(&config_path).unwrap();
+        
+        assert_eq!(loaded_config.version, config.version);
+        assert!(loaded_config.hooks.is_some());
+        
+        let loaded_hooks = loaded_config.hooks.unwrap();
+        assert!(loaded_hooks.post_create.is_some());
+        
+        let hooks_vec = loaded_hooks.post_create.unwrap();
+        assert_eq!(hooks_vec.len(), 1);
+        assert_eq!(hooks_vec[0].hook_type, HookType::Command);
+        assert_eq!(hooks_vec[0].command, Some("npm install".to_string()));
+    }
+    
+    #[test]
+    fn test_config_with_copy_hook_serialization() {
+        // What: copyフックの直列化・逆直列化が正しく動作するかテスト
+        let hook = Hook {
+            hook_type: HookType::Copy,
+            from: Some("README.md".to_string()),
+            to: Some("README.md".to_string()),
+            command: None,
+            env: None,
+        };
+        
+        let hooks = Hooks {
+            post_create: Some(vec![hook]),
+        };
+        
+        let config = Config {
+            version: "1.0".to_string(),
+            defaults: DefaultConfig::default(),
+            hooks: Some(hooks),
+        };
+        
+        let temp_dir = tempdir().unwrap();
+        let config_path = temp_dir.path().join("copy_config.yml");
+        
+        config.save_to_file(&config_path).unwrap();
+        let loaded_config = Config::load_from_file(&config_path).unwrap();
+        
+        let loaded_hooks = loaded_config.hooks.unwrap();
+        let hooks_vec = loaded_hooks.post_create.unwrap();
+        
+        assert_eq!(hooks_vec[0].hook_type, HookType::Copy);
+        assert_eq!(hooks_vec[0].from, Some("README.md".to_string()));
+        assert_eq!(hooks_vec[0].to, Some("README.md".to_string()));
+        assert!(hooks_vec[0].command.is_none());
+    }
+    
+    #[test]
+    fn test_config_fails_with_invalid_yaml() {
+        // What: 不正なYAMLファイルの読み込みでエラーが返されるかテスト
+        let temp_dir = tempdir().unwrap();
+        let config_path = temp_dir.path().join("invalid.yml");
+        
+        // 不正なYAMLを書き込み
+        std::fs::write(&config_path, "invalid: yaml: content: [").unwrap();
+        
+        let result = Config::load_from_file(&config_path);
+        
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GitGardenerError::Custom(_)));
+    }
 }
