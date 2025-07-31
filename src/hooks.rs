@@ -124,3 +124,209 @@ impl HookExecutor {
         true
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::{Hook, HookType};
+    use tempfile::tempdir;
+    use std::fs;
+
+    #[test]
+    fn test_hook_executor_new_creates_instance() {
+        // What: HookExecutor::newが正しくインスタンスを作成するかテスト
+        let _executor = HookExecutor::new();
+    }
+
+    #[test]
+    fn test_execute_copy_hook_copies_file() {
+        // What: copyフックがファイルを正しくコピーするかテスト
+        let temp_dir = tempdir().unwrap();
+        let worktree_path = temp_dir.path().join("worktree");
+        fs::create_dir_all(&worktree_path).unwrap();
+        
+        // ソースファイルを作成
+        let source_file = temp_dir.path().join("source.txt");
+        fs::write(&source_file, "test content").unwrap();
+        
+        let hook = Hook {
+            hook_type: HookType::Copy,
+            from: Some(source_file.to_string_lossy().to_string()),
+            to: Some("dest.txt".to_string()),
+            command: None,
+            env: None,
+        };
+        
+        let executor = HookExecutor::new();
+        let result = executor.execute_copy_hook(&hook, &worktree_path);
+        
+        assert!(result.is_ok());
+        
+        // ファイルがコピーされたことを確認
+        let dest_file = worktree_path.join("dest.txt");
+        assert!(dest_file.exists());
+        let content = fs::read_to_string(dest_file).unwrap();
+        assert_eq!(content, "test content");
+    }
+
+    #[test]
+    fn test_execute_copy_hook_fails_without_from_field() {
+        // What: fromフィールドがないcopyフックがエラーになるかテスト
+        let temp_dir = tempdir().unwrap();
+        let worktree_path = temp_dir.path().join("worktree");
+        
+        let hook = Hook {
+            hook_type: HookType::Copy,
+            from: None,
+            to: Some("dest.txt".to_string()),
+            command: None,
+            env: None,
+        };
+        
+        let executor = HookExecutor::new();
+        let result = executor.execute_copy_hook(&hook, &worktree_path);
+        
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GitGardenerError::Custom(_)));
+    }
+
+    #[test]
+    fn test_execute_copy_hook_fails_without_to_field() {
+        // What: toフィールドがないcopyフックがエラーになるかテスト
+        let temp_dir = tempdir().unwrap();
+        let worktree_path = temp_dir.path().join("worktree");
+        
+        let hook = Hook {
+            hook_type: HookType::Copy,
+            from: Some("source.txt".to_string()),
+            to: None,
+            command: None,
+            env: None,
+        };
+        
+        let executor = HookExecutor::new();
+        let result = executor.execute_copy_hook(&hook, &worktree_path);
+        
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GitGardenerError::Custom(_)));
+    }
+
+    #[test]
+    fn test_execute_copy_hook_fails_for_nonexistent_source() {
+        // What: 存在しないソースファイルでcopyフックがエラーになるかテスト
+        let temp_dir = tempdir().unwrap();
+        let worktree_path = temp_dir.path().join("worktree");
+        
+        let hook = Hook {
+            hook_type: HookType::Copy,
+            from: Some("nonexistent.txt".to_string()),
+            to: Some("dest.txt".to_string()),
+            command: None,
+            env: None,
+        };
+        
+        let executor = HookExecutor::new();
+        let result = executor.execute_copy_hook(&hook, &worktree_path);
+        
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GitGardenerError::Custom(_)));
+    }
+
+    #[test]
+    fn test_execute_command_hook_runs_command() {
+        // What: commandフックがコマンドを正しく実行するかテスト
+        let temp_dir = tempdir().unwrap();
+        let worktree_path = temp_dir.path().join("worktree");
+        fs::create_dir_all(&worktree_path).unwrap();
+        
+        let hook = Hook {
+            hook_type: HookType::Command,
+            from: None,
+            to: None,
+            command: Some("echo 'test' > test.txt".to_string()),
+            env: None,
+        };
+        
+        let executor = HookExecutor::new();
+        let result = executor.execute_command_hook(&hook, &worktree_path, "test-branch");
+        
+        assert!(result.is_ok());
+        
+        // コマンドが実行されたことを確認
+        let test_file = worktree_path.join("test.txt");
+        assert!(test_file.exists());
+    }
+
+    #[test]
+    fn test_execute_command_hook_fails_without_command_field() {
+        // What: commandフィールドがないcommandフックがエラーになるかテスト
+        let temp_dir = tempdir().unwrap();
+        let worktree_path = temp_dir.path().join("worktree");
+        
+        let hook = Hook {
+            hook_type: HookType::Command,
+            from: None,
+            to: None,
+            command: None,
+            env: None,
+        };
+        
+        let executor = HookExecutor::new();
+        let result = executor.execute_command_hook(&hook, &worktree_path, "test-branch");
+        
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GitGardenerError::Custom(_)));
+    }
+
+    #[test]
+    fn test_expand_variables_replaces_placeholders() {
+        // What: 環境変数のプレースホルダが正しく置換されるかテスト
+        let temp_dir = tempdir().unwrap();
+        let worktree_path = temp_dir.path().join("worktree");
+        
+        let executor = HookExecutor::new();
+        let command = "echo '${BRANCH}' '${WORKTREE_PATH}'";
+        let expanded = executor.expand_variables(command, &worktree_path, "feature-test");
+        
+        assert!(expanded.contains("feature-test"));
+        assert!(expanded.contains(&worktree_path.display().to_string()));
+    }
+
+    #[test]
+    fn test_execute_hooks_runs_multiple_hooks() {
+        // What: 複数のフックが順番に実行されるかテスト
+        let temp_dir = tempdir().unwrap();
+        let worktree_path = temp_dir.path().join("worktree");
+        fs::create_dir_all(&worktree_path).unwrap();
+        
+        // ソースファイルを作成
+        let source_file = temp_dir.path().join("source.txt");
+        fs::write(&source_file, "test content").unwrap();
+        
+        let hooks = vec![
+            Hook {
+                hook_type: HookType::Copy,
+                from: Some(source_file.to_string_lossy().to_string()),
+                to: Some("copied.txt".to_string()),
+                command: None,
+                env: None,
+            },
+            Hook {
+                hook_type: HookType::Command,
+                from: None,
+                to: None,
+                command: Some("echo 'command executed' > executed.txt".to_string()),
+                env: None,
+            },
+        ];
+        
+        let executor = HookExecutor::new();
+        let result = executor.execute_hooks(&worktree_path, "test-branch", &hooks);
+        
+        assert!(result.is_ok());
+        
+        // 両方のフックが実行されたことを確認
+        assert!(worktree_path.join("copied.txt").exists());
+        assert!(worktree_path.join("executed.txt").exists());
+    }
+}
