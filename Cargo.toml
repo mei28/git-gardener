@@ -1,11 +1,11 @@
 [package]
 name = "git-gardener"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["mei <mei@example.com>"]
 description = "A Git worktree management tool"
 license = "MIT"
-repository = "https://github.com/username/git-gardener"
+repository = "https://github.com/mei28/git-gardener"
 keywords = ["git", "worktree", "cli", "tool"]
 categories = ["command-line-utilities", "development-tools"]
 
