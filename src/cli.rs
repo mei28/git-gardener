@@ -65,5 +65,12 @@ pub enum Commands {
         #[arg(value_enum)]
         shell: crate::commands::completion::CompletionShell,
     },
+
+    /// Generate shell integration script (enables 'ggr cd' to work directly)
+    ShellInit {
+        /// Shell to generate integration script for
+        #[arg(value_enum)]
+        shell: crate::commands::completion::CompletionShell,
+    },
 }
 

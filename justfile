@@ -89,3 +89,29 @@ demo-clean:
     cargo build
     ./target/debug/git-gardener remove test-branch || true
     git branch -D test-branch || true
+
+# shell-init スクリプトを表示（Bash）
+demo-shell-init-bash:
+    cargo build
+    ./target/debug/git-gardener shell-init bash
+
+# shell-init スクリプトを表示（Zsh）
+demo-shell-init-zsh:
+    cargo build
+    ./target/debug/git-gardener shell-init zsh
+
+# shell-init スクリプトを表示（Fish）
+demo-shell-init-fish:
+    cargo build
+    ./target/debug/git-gardener shell-init fish
+
+# シェル統合をテスト（Bash）
+test-shell-integration:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cargo build
+    echo "Testing shell integration..."
+    eval "$(./target/debug/git-gardener shell-init bash)"
+    echo "✓ Shell function loaded successfully"
+    type ggr | head -1
+    echo "✓ Shell integration test passed"

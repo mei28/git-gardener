@@ -29,6 +29,39 @@ cargo build --release
 
 ## 使用方法
 
+### シェル統合（推奨）
+
+シェル統合を有効にすると、`ggr cd`コマンドで直接ディレクトリ移動ができます。
+
+```bash
+# Bash
+echo 'eval "$(git-gardener shell-init bash)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Zsh
+echo 'eval "$(git-gardener shell-init zsh)"' >> ~/.zshrc
+source ~/.zshrc
+
+# Fish
+echo 'git-gardener shell-init fish | source' >> ~/.config/fish/config.fish
+source ~/.config/fish/config.fish
+```
+
+シェル統合を有効にした後は、以下のように簡単に使えます。
+
+```bash
+# worktreeに移動（シェル統合版）
+ggr cd feature/new-feature
+
+# メインworktreeに移動
+ggr cd @
+
+# その他のコマンドも同様に使える
+ggr add feature/test -b
+ggr list
+ggr remove feature/test
+```
+
 ### 基本コマンド
 
 ```bash
@@ -44,11 +77,11 @@ git-gardener add existing-branch
 # worktree一覧を表示
 git-gardener list
 
-# worktreeに移動（パスを出力）
-git-gardener cd feature/new-feature
+# worktreeに移動（パスを出力、シェル統合なしの場合）
+cd "$(git-gardener cd feature/new-feature)"
 
 # メインworktreeに移動
-git-gardener cd @
+cd "$(git-gardener cd @)"
 
 # worktreeを削除
 git-gardener remove feature/new-feature
@@ -56,7 +89,7 @@ git-gardener remove feature/new-feature
 # ブランチも一緒に削除
 git-gardener remove feature/new-feature --with-branch
 
-# シェル補完を生成
+# シェル補完のみを生成（シェル統合を使わない場合）
 git-gardener completion bash > ~/.bash_completion.d/git-gardener
 ```
 

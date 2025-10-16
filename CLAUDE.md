@@ -238,10 +238,11 @@ git-gardener/
 
 1. `init` - プロジェクトの初期化
 2. `add` - 新規worktreeの作成
-3. `list` - worktree一覧表示  
+3. `list` - worktree一覧表示
 4. `cd` - worktreeへの移動（パス出力）
 5. `remove` - worktreeの削除
 6. `completion` - シェル補完の生成
+7. `shell-init` - シェル統合スクリプトの生成
 
 ## 設定ファイル
 

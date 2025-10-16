@@ -7,7 +7,7 @@ mod hooks;
 
 use clap::Parser;
 use cli::{Cli, Commands};
-use commands::{add::AddCommand, cd::CdCommand, completion::CompletionCommand, init::InitCommand, list::ListCommand, remove::RemoveCommand};
+use commands::{add::AddCommand, cd::CdCommand, completion::CompletionCommand, init::InitCommand, list::ListCommand, remove::RemoveCommand, shell_init::ShellInitCommand};
 use error::Result;
 
 fn main() {
@@ -49,6 +49,10 @@ fn run() -> Result<()> {
         }
         Commands::Completion { shell } => {
             let cmd = CompletionCommand::new(shell);
+            cmd.execute()
+        }
+        Commands::ShellInit { shell } => {
+            let cmd = ShellInitCommand::new(shell);
             cmd.execute()
         }
     }
