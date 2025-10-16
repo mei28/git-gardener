@@ -37,6 +37,9 @@ serde_yaml = "0.9"
 directories = "5.0"
 pathdiff = "0.2"
 
+# Terminal colors
+colored = "2.1"
+
 [dev-dependencies]
 # Testing
 assert_cmd = "2.0"

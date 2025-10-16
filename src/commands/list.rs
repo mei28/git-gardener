@@ -1,5 +1,6 @@
 use crate::error::Result;
 use crate::git::GitWorktree;
+use colored::*;
 
 pub struct ListCommand {
     pub names_only: bool,
@@ -28,14 +29,18 @@ impl ListCommand {
             }
         } else {
             // 通常の表形式表示
-            println!("{:<30} {:<50}", "BRANCH", "PATH");
-            println!("{}", "-".repeat(80));
-            
+            println!(
+                "{:<30} {:<50}",
+                "BRANCH".blue().bold(),
+                "PATH".blue().bold()
+            );
+            println!("{}", "-".repeat(80).bright_black());
+
             for worktree in worktrees {
                 println!(
                     "{:<30} {:<50}",
-                    worktree.branch,
-                    worktree.path.display()
+                    worktree.branch.green(),
+                    worktree.path.display().to_string().yellow()
                 );
             }
         }
